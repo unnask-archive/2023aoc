@@ -1,9 +1,14 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+const numChars: [10]u8 = [_]u8{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
 fn readFile(allocator: Allocator, path: []const u8) ![]const u8 {
     var file = try std.fs.cwd().openFile(path, .{});
     defer file.close();
+
+    //could also just
+    //try std.fs.cwd().readFileAlloc(...);
 
     var fsz = (try file.stat()).size;
     var br = std.io.bufferedReader(file.reader());
@@ -19,30 +24,26 @@ fn getNumFromLine(line: []const u8) [2]u8 {
     return [2]u8{ line[first], line[last] };
 }
 
-fn nextLine(input: []const u8) []const u8 {
-    const pos = std.mem.indexOfPos(u8, input, 0, &[_]u8{'\n'}) orelse input.len;
-    return input[0..pos];
-}
-
-const numChars: [10]u8 = [_]u8{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-
-    const input = try readFile(allocator, "input");
-    var cursor: usize = 0;
+fn printPart1(input: []const u8) !void {
     var answer: i32 = 0;
-    while (cursor < input.len) {
-        const line = nextLine(input[cursor..]);
+    var iter = std.mem.splitScalar(u8, input, '\n');
+    while (iter.next()) |line| {
         if (line.len == 0) {
             break;
         }
-        cursor += line.len + 1;
 
         const digit = getNumFromLine(line);
         const castedDigit = try std.fmt.parseInt(i32, &digit, 10);
         answer += castedDigit;
     }
     std.debug.print("The number is: {d}\n", .{answer});
+}
+
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    const input = try readFile(allocator, "input");
+    defer allocator.free(input);
+    try printPart1(input);
 }
