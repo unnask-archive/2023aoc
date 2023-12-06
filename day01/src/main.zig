@@ -46,7 +46,7 @@ fn findFirstWord(input: []const u8, otherwise: u8) u8 {
     }
 
     var slice = input;
-    while (slice.len > 3) {
+    while (slice.len >= 3) {
         var i: u8 = 0;
         for (alphas) |alpha| {
             if (slice.len >= alpha.len and std.mem.eql(u8, alpha, slice[0..alpha.len])) {
@@ -101,9 +101,11 @@ fn printPart2(input: []const u8) !void {
         const last = std.mem.lastIndexOfAny(u8, line, &numChars) orelse 0;
 
         const firstDigit = findFirstWord(line[0..first], line[first]);
-        const lastDigit = findLastWord(line[last + 1 ..], line[last]);
+        const lastDigit = findLastWord(line[last..], line[last]);
         const digit = (firstDigit - '0') * 10 + lastDigit - '0';
         answer += digit;
+
+        std.debug.print("Line is {s}, digit is {d}\n", .{ line, digit });
     }
     std.debug.print("The part 2 number is: {d}\n", .{answer});
 }
