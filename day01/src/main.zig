@@ -17,15 +17,15 @@ fn readFile(allocator: Allocator, path: []const u8) ![]const u8 {
     return try reader.readAllAlloc(allocator, fsz);
 }
 
-fn getNumFromLine(line: []const u8) [2]u8 {
+fn getNumFromLine(line: []const u8) usize {
     const first = std.mem.indexOfAny(u8, line, &numChars).?;
     const last = std.mem.lastIndexOfAny(u8, line, &numChars).?;
 
-    return [2]u8{ line[first], line[last] };
+    return (line[first] - '0') * 10 + line[last] - '0';
 }
 
 fn printPart1(input: []const u8) !void {
-    var answer: i32 = 0;
+    var answer: usize = 0;
     var iter = std.mem.splitScalar(u8, input, '\n');
     while (iter.next()) |line| {
         if (line.len == 0) {
@@ -33,21 +33,59 @@ fn printPart1(input: []const u8) !void {
         }
 
         const digit = getNumFromLine(line);
-        const castedDigit = try std.fmt.parseInt(i32, &digit, 10);
-        answer += castedDigit;
+        answer += digit;
     }
     std.debug.print("The number is: {d}\n", .{answer});
 }
 
+const alphas: [10][]const u8 = [10][]const u8{ "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+
 fn findFirstWord(input: []const u8, otherwise: u8) u8 {
-    _ = input;
+    if (input.len < 3) {
+        return otherwise;
+    }
+
+    var slice = input;
+    while (slice.len > 3) {
+        var i: u8 = 0;
+        for (alphas) |alpha| {
+            if (slice.len >= alpha.len and std.mem.eql(u8, alpha, slice[0..alpha.len])) {
+                return '0' + i;
+            }
+            i += 1;
+        }
+        slice = slice[1..];
+    }
 
     return otherwise;
 }
 
 fn findLastWord(input: []const u8, otherwise: u8) u8 {
-    _ = input;
+    if (input.len < 3) {
+        return otherwise;
+    }
 
+    var start: usize = input.len - 3;
+    while (start > 0) {
+        var i: u8 = 0;
+        const slice = input[start..];
+        for (alphas) |alpha| {
+            if (slice.len >= alpha.len and std.mem.eql(u8, alpha, slice[0..alpha.len])) {
+                return '0' + i;
+            }
+            i += 1;
+        }
+        start -= 1;
+    }
+
+    var i: u8 = 0;
+    const slice = input;
+    for (alphas) |alpha| {
+        if (slice.len >= alpha.len and std.mem.eql(u8, alpha, slice[0..alpha.len])) {
+            return '0' + i;
+        }
+        i += 1;
+    }
     return otherwise;
 }
 
@@ -59,15 +97,13 @@ fn printPart2(input: []const u8) !void {
             break;
         }
 
-        const first = std.mem.indexOfAny(u8, line, &numChars).?;
-        const last = std.mem.lastIndexOfAny(u8, line, &numChars).?;
+        const first = std.mem.indexOfAny(u8, line, &numChars) orelse line.len - 1;
+        const last = std.mem.lastIndexOfAny(u8, line, &numChars) orelse 0;
 
         const firstDigit = findFirstWord(line[0..first], line[first]);
         const lastDigit = findLastWord(line[last + 1 ..], line[last]);
-        const digit = [2]u8{ firstDigit, lastDigit };
-
-        const castedDigit = try std.fmt.parseInt(i32, &digit, 10);
-        answer += castedDigit;
+        const digit = (firstDigit - '0') * 10 + lastDigit - '0';
+        answer += digit;
     }
     std.debug.print("The part 2 number is: {d}\n", .{answer});
 }
@@ -78,6 +114,6 @@ pub fn main() !void {
 
     const input = try readFile(allocator, "input");
     defer allocator.free(input);
-    try printPart1(input);
+    //try printPart1(input);
     try printPart2(input);
 }
