@@ -6,7 +6,7 @@ fn readFile(allocator: Allocator, path: []const u8) ![]const u8 {
     defer file.close();
 
     var fsz = (try file.stat()).size;
-    var br = std.io.BufferedReader(file.reader());
+    var br = std.io.bufferedReader(file.reader());
     var reader = br.reader();
 
     return try reader.readAllAlloc(allocator, fsz);
@@ -35,17 +35,27 @@ const Bag = struct {
 fn parseLine(line: []const u8) Bag {
     var idxIter = std.mem.splitScalar(u8, line, ':');
 
-    const game = idxIter.next();
-    _ = game;
-    const lineResults = idxIter.next();
-    _ = lineResults;
+    const game = idxIter.next().?;
+    const lineResults = idxIter.next().?;
+
+    std.debug.print("game: {s}\n line: {s}\n\n", .{ game, lineResults });
+
+    return Bag{
+        .idx = 1,
+        .red = 1,
+        .green = 1,
+        .blue = 1,
+    };
 }
 
 fn performPart1(input: []const u8) !void {
     var linesIter = std.mem.splitScalar(u8, input, '\n');
 
     while (linesIter.next()) |line| {
-        _ = line;
+        if (line.len < 6) {
+            continue;
+        }
+        _ = parseLine(line);
     }
 }
 
