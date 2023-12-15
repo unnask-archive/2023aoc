@@ -87,11 +87,14 @@ fn performPart1(input: []const u8) !void {
     var linesIter = std.mem.splitScalar(u8, input, '\n');
 
     var total: i32 = 0;
+    var p2Total: i32 = 0;
     while (linesIter.next()) |line| {
         if (line.len < 6) {
             continue;
         }
         const bag = parseLine(line);
+        const power = bag.red * bag.green * bag.blue;
+        p2Total += power;
 
         if (bag.red <= 12 and bag.green <= 13 and bag.blue <= 14) {
             total += bag.idx;
@@ -99,6 +102,7 @@ fn performPart1(input: []const u8) !void {
     }
 
     std.debug.print("The total is: {d}\n", .{total});
+    std.debug.print("The part 2 total is: {d}\n", .{p2Total});
 }
 
 pub fn main() !void {
