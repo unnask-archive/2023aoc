@@ -88,4 +88,6 @@ pub fn main() !void {
     const input = try readFile(allocator, "input");
 
     try p1Answer(input);
+
+    // for part two, look for the * rather than the numbers.
 }
