@@ -112,15 +112,35 @@ const Gear = struct {
 };
 
 fn checkGear(input: []const u8, cursor: usize, linesz: usize) ?Gear {
-    _ = linesz;
-    _ = cursor;
-    _ = input;
     var gear = Gear{
         .part1 = 0,
         .part2 = 0,
     };
 
+    //check the middle
+    if (std.ascii.isDigit(input[cursor - 1])) {
+        const number = getNumber(input, cursor - 1);
+        addToGear(&gear, number);
+    }
+    if (std.ascii.isDigit(input[cursor - 1])) {
+        const number = getNumber(input, cursor - 1);
+        addToGear(gear, number);
+    }
+
+    //check the top
+    if (cursor > linesz) {}
+
+    //check the bottom
+
     return gear;
+}
+
+fn addToGear(gear: *Gear, digit: i32) void {
+    if (gear.part1 == 0) {
+        gear.part1 = digit;
+    } else {
+        gear.part2 = digit;
+    }
 }
 
 fn getNumber(input: []const u8, pos: usize) i32 {
