@@ -98,13 +98,7 @@ fn p2Answer(input: []const u8) !void {
 
     for (input, 0..) |character, cursor| {
         if (character == '*') {
-            const start = if (cursor > nli) v: {
-                break :v cursor - nli;
-            } else v: {
-                break :v cursor - 1;
-            };
-            const end = @min(input.len, cursor + nli + 2);
-            if (checkGear(input[start..end], nli)) |gear| {
+            if (checkGear(input, cursor, nli)) |gear| {
                 _ = gear;
                 // do it
             }
@@ -117,16 +111,28 @@ const Gear = struct {
     part2: i32,
 };
 
-fn checkGear(input: []const u8, linesz: usize) ?Gear {
+fn checkGear(input: []const u8, cursor: usize, linesz: usize) ?Gear {
+    _ = linesz;
+    _ = cursor;
+    _ = input;
     var gear = Gear{
         .part1 = 0,
         .part2 = 0,
     };
 
-    var window = std.mem.window(u8, input, 3, linesz);
-    while (window.next()) |slice| {
-        _ = slice;
+    return gear;
+}
+
+fn getNumber(input: []const u8, pos: usize) i32 {
+    var start = pos;
+    var end = pos;
+
+    while (std.ascii.isDigit(input[end])) {
+        end += 1;
+    }
+    while (std.ascii.isDigit(input[start])) {
+        start -= 1;
     }
 
-    return gear;
+    return std.fmt.parseInt(i32, input[start .. end + 1], 10) catch 0;
 }
