@@ -125,8 +125,8 @@ fn checkGear(input: []const u8, cursor: usize, linesz: usize) ?Gear {
         const number = getNumber(input, cursor - 1);
         addToGear(&gear, number);
     }
-    if (std.ascii.isDigit(input[cursor - 1])) {
-        const number = getNumber(input, cursor - 1);
+    if (std.ascii.isDigit(input[cursor + 1])) {
+        const number = getNumber(input, cursor + 1);
         addToGear(&gear, number);
     }
 
@@ -136,16 +136,15 @@ fn checkGear(input: []const u8, cursor: usize, linesz: usize) ?Gear {
         if (std.ascii.isDigit(input[offset])) {
             const number = getNumber(input, offset);
             addToGear(&gear, number);
-        }
-    } else {
-        var offset = cursor - linesz;
-        if (std.ascii.isDigit(input[offset - 1])) {
-            const number = getNumber(input, offset - 1);
-            addToGear(&gear, number);
-        }
-        if (std.ascii.isDigit(input[offset + 1])) {
-            const number = getNumber(input, offset + 1);
-            addToGear(&gear, number);
+        } else {
+            if (std.ascii.isDigit(input[offset - 1])) {
+                const number = getNumber(input, offset - 1);
+                addToGear(&gear, number);
+            }
+            if (std.ascii.isDigit(input[offset + 1])) {
+                const number = getNumber(input, offset + 1);
+                addToGear(&gear, number);
+            }
         }
     }
 
@@ -155,23 +154,21 @@ fn checkGear(input: []const u8, cursor: usize, linesz: usize) ?Gear {
         if (std.ascii.isDigit(input[offset])) {
             const number = getNumber(input, offset);
             addToGear(&gear, number);
-        }
-    } else {
-        var offset = cursor + linesz;
-        if (std.ascii.isDigit(input[offset - 1])) {
-            const number = getNumber(input, offset - 1);
-            addToGear(&gear, number);
-        }
-        if (std.ascii.isDigit(input[offset + 1])) {
-            const number = getNumber(input, offset + 1);
-            addToGear(&gear, number);
+        } else {
+            if (std.ascii.isDigit(input[offset - 1])) {
+                const number = getNumber(input, offset - 1);
+                addToGear(&gear, number);
+            }
+            if (std.ascii.isDigit(input[offset + 1])) {
+                const number = getNumber(input, offset + 1);
+                addToGear(&gear, number);
+            }
         }
     }
     return gear;
 }
 
 fn addToGear(gear: *Gear, digit: i32) void {
-    std.debug.print("adding {d}\n", .{digit});
     if (gear.part1 == 0) {
         gear.part1 = digit;
     } else {
@@ -189,7 +186,7 @@ fn getNumber(input: []const u8, pos: usize) i32 {
     while (std.ascii.isDigit(input[start])) {
         start -= 1;
     }
+    start += 1;
 
-    std.debug.print("Parsing: {s}\n", .{input[start + 1 .. end]});
-    return std.fmt.parseInt(i32, input[start + 1 .. end], 10) catch 0;
+    return std.fmt.parseInt(i32, input[start..end], 10) catch 0;
 }
