@@ -44,7 +44,7 @@ fn checkAdjacent(input: []const u8, start: usize, end: usize, len: usize) bool {
     return false;
 }
 
-fn p1Answer(input: []const u8) !void {
+fn p1Answer(input: []const u8) void {
     var nli = std.mem.indexOf(u8, input, &[_]u8{'\n'}) orelse 0;
     nli += 1;
 
@@ -87,7 +87,46 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     const input = try readFile(allocator, "input");
 
-    try p1Answer(input);
+    p1Answer(input);
 
     // for part two, look for the * rather than the numbers.
+}
+
+fn p2Answer(input: []const u8) !void {
+    var nli = std.mem.indexOf(u8, input, &[_]u8{'\n'});
+    nli += 1;
+
+    for (input, 0..) |character, cursor| {
+        if (character == '*') {
+            const start = if (cursor > nli) v: {
+                break :v cursor - nli;
+            } else v: {
+                break :v cursor - 1;
+            };
+            const end = @min(input.len, cursor + nli + 2);
+            if (checkGear(input[start..end], nli)) |gear| {
+                _ = gear;
+                // do it
+            }
+        }
+    }
+}
+
+const Gear = struct {
+    part1: i32,
+    part2: i32,
+};
+
+fn checkGear(input: []const u8, linesz: usize) ?Gear {
+    var gear = Gear{
+        .part1 = 0,
+        .part2 = 0,
+    };
+
+    var window = std.mem.window(u8, input, 3, linesz);
+    while (window.next()) |slice| {
+        _ = slice;
+    }
+
+    return gear;
 }
