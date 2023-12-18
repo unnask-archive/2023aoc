@@ -1,24 +1,54 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 
-pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+fn readFile(allocator: Allocator, name: []const u8) ![]const u8 {
+    var file = try std.fs.cwd().openFile(name, .{});
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+    const fileSize = (try file.stat()).size;
+    var br = std.io.bufferedReader(file.reader());
+    var reader = br.reader();
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
-
-    try bw.flush(); // don't forget to flush!
+    return reader.readAllAlloc(allocator, fileSize);
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    const input = try readFile(allocator, "input");
+
+    std.debug.print("{s}\n", .{input});
+}
+
+const Card = struct {
+    drawn: [10]i32,
+    guesses: [25]i32,
+
+    const Self = @This();
+
+    fn parseCard(self: *Self, card: []const u8) void {
+        var window = std.mem.window(u8, card, 3, 3);
+
+        for (window.next(), 0..) |num, i| {
+            self.drawn[i] = std.fmt.parseInt(i32, num, 10) catch 0;
+        }
+    }
+
+    fn parseGuessed(self: *Self, guessed: []const u8) void {
+        var window = std.mem.window(u8, guessed, 3, 3);
+
+        for (window.next(), 0..) |num, i| {
+            self.guesses[i] = std.fmt.parseInt(i32, num, 10) catch 0;
+        }
+    }
+};
+
+fn p1Answer(input: []const u8) void {
+    var lnIter = std.mem.splitScalar(u8, input, '\n');
+
+    while (lnIter.next()) |line| {
+        const idx = std.mem.indexOf(u8, line, '|');
+        const card = Card.init(input[10..idx], input[idx + 1 ..]);
+        _ = card;
+    }
 }
