@@ -18,12 +18,12 @@ pub fn main() !void {
     const input = try readFile(allocator, "input");
 
     //std.debug.print("{s}\n", .{input});
-    p1Answer(input);
+    p2Answer(input);
 }
 
 const Card = struct {
-    drawn: [10]i32,
-    guesses: [25]i32,
+    drawn: [10]usize,
+    guesses: [100]bool,
 
     const Self = @This();
 
@@ -32,18 +32,18 @@ const Card = struct {
 
         var i: usize = 0;
         while (window.next()) |num| {
-            self.drawn[i] = std.fmt.parseInt(i32, num, 10) catch 0;
+            self.drawn[i] = std.fmt.parseInt(usize, std.mem.trim(u8, num, &[_]u8{' '}), 10) catch 0;
             i += 1;
         }
     }
 
     fn parseGuessed(self: *Self, guessed: []const u8) void {
+        self.guesses = .{false} ** 100;
         var window = std.mem.window(u8, guessed, 3, 3);
 
-        var i: usize = 0;
         while (window.next()) |num| {
-            self.guesses[i] = std.fmt.parseInt(i32, num, 10) catch 0;
-            i += 1;
+            const g = std.fmt.parseInt(usize, std.mem.trim(u8, num, &[_]u8{' '}), 10) catch 0;
+            self.guesses[g] = true;
         }
     }
 };
@@ -51,16 +51,77 @@ const Card = struct {
 fn p1Answer(input: []const u8) void {
     var lnIter = std.mem.splitScalar(u8, input, '\n');
 
+    var total: usize = 0;
     while (lnIter.next()) |line| {
+        if (line.len == 0) {
+            continue;
+        }
         const idx = std.mem.indexOf(u8, line, &[_]u8{'|'}) orelse 30;
         var card = Card{
             .drawn = .{0} ** 10,
-            .guesses = .{0} ** 25,
+            .guesses = .{false} ** 100,
         };
-        card.parseCard(input[10..idx]);
-        card.parseGuessed(input[idx + 1 ..]);
+        card.parseCard(line[10..idx]);
+        card.parseGuessed(line[idx + 1 ..]);
 
-        const count = std.mem.count(i32, &card.drawn, &card.guesses);
-        std.debug.print("Count is: {d}\n", count);
+        var count: usize = 0;
+        for (card.drawn) |num| {
+            if (card.guesses[num] == true) {
+                count += 1;
+            }
+        }
+
+        total += power(count);
+    }
+    std.debug.print("Total is: {d}\n", .{total});
+}
+
+fn power(n: usize) usize {
+    return switch (n) {
+        0 => 0,
+        1 => 1,
+        2 => 2,
+        else => std.math.pow(usize, 2, n - 1),
+    };
+}
+
+fn p2Answer(input: []const u8) void {
+    var lnIter = std.mem.splitScalar(u8, input, '\n');
+
+    var cards: [201]usize = .{0} ** 201;
+    var c: usize = 0;
+    var total: usize = 0;
+    _ = total;
+    while (lnIter.next()) |line| {
+        if (line.len == 0) {
+            continue;
+        }
+        const idx = std.mem.indexOf(u8, line, &[_]u8{'|'}) orelse 30;
+        var card = Card{
+            .drawn = .{0} ** 10,
+            .guesses = .{false} ** 100,
+        };
+        card.parseCard(line[10..idx]);
+        card.parseGuessed(line[idx + 1 ..]);
+
+        var count: usize = 0;
+        for (card.drawn) |num| {
+            if (card.guesses[num] == true) {
+                count += 1;
+            }
+        }
+
+        std.debug.print("count: {d} {s}\n", .{ count, line });
+
+        c += 1;
+        if (count != 0) {
+            for (c + 1..c + count) |ele| {
+                std.debug.print("adding 1 to {d}\n", .{ele});
+                cards[ele] += 1;
+            }
+        }
+    }
+    for (cards, 0..) |ele, i| {
+        std.debug.print("card {d} count: {d}\n", .{ i, ele });
     }
 }
