@@ -88,10 +88,10 @@ fn power(n: usize) usize {
 fn p2Answer(input: []const u8) void {
     var lnIter = std.mem.splitScalar(u8, input, '\n');
 
-    var cards: [201]usize = .{0} ** 201;
+    var cards: [201]usize = .{1} ** 201;
+    cards[0] = 1;
     var c: usize = 0;
     var total: usize = 0;
-    _ = total;
     while (lnIter.next()) |line| {
         if (line.len == 0) {
             continue;
@@ -111,17 +111,15 @@ fn p2Answer(input: []const u8) void {
             }
         }
 
-        std.debug.print("count: {d} {s}\n", .{ count, line });
-
-        c += 1;
         if (count != 0) {
-            for (c + 1..c + count) |ele| {
-                std.debug.print("adding 1 to {d}\n", .{ele});
-                cards[ele] += 1;
+            for (c + 1..c + count + 1) |ele| {
+                cards[ele] += 1 * cards[c];
             }
         }
+        c += 1;
     }
-    for (cards, 0..) |ele, i| {
-        std.debug.print("card {d} count: {d}\n", .{ i, ele });
+    for (cards) |ele| {
+        total += ele;
     }
+    std.debug.print("The total is: {d}\n", .{total});
 }
