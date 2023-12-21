@@ -65,16 +65,27 @@ const Almanac = struct {
                 }
 
                 const mapping = Mapping{
-                    .to = to,
+                    .to = to[0 .. to.len - 5],
                     .from = from,
                     .map = try sources.toOwnedSlice(),
                 };
-                try ret.mappings.put(mapping.to, mapping);
+                try ret.mappings.put(mapping.from, mapping);
             }
         }
         return ret;
     }
 };
+
+fn findLocationFromSeed(almanac: Almanac, seed: usize) usize {
+    _ = seed;
+    _ = almanac;
+
+    // lookup, find the offset (if there is one)
+    // get the "to" map, and do the lookup again.
+    // "easy peasy"
+
+    return 0;
+}
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -87,5 +98,9 @@ pub fn main() !void {
     _ = seeds;
 
     const almanac = try Almanac.fromInput(allocator, input[idx + 1 ..]);
-    _ = almanac;
+
+    var keys = almanac.mappings.keyIterator();
+    while (keys.next()) |key| {
+        std.debug.print("key is: {s}\n", .{key.*});
+    }
 }
