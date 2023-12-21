@@ -52,8 +52,8 @@ const Almanac = struct {
                     }
 
                     var tlnIter = std.mem.splitScalar(u8, tln, ' ');
-                    const srcstr = tlnIter.next().?;
                     const deststr = tlnIter.next().?;
+                    const srcstr = tlnIter.next().?;
                     const rangestr = tlnIter.next().?;
 
                     const triple = Triple{
@@ -76,15 +76,32 @@ const Almanac = struct {
     }
 };
 
-fn findLocationFromSeed(almanac: Almanac, seed: usize) usize {
-    _ = seed;
-    _ = almanac;
+fn probeSeedLocation(almanac: Almanac, seed: usize) usize {
 
     // lookup, find the offset (if there is one)
     // get the "to" map, and do the lookup again.
     // "easy peasy"
+    var key = "seed";
+    var mapping = almanac.mappings.get(key);
+    var value = seed;
+    while (mapping) |map| {
+        var offset: usize = 0;
+        var idx: usize = 0;
+        for (map.map, 0..) |src, i| {
+            const max = src.source + src.range;
+            if (value <= max and value >= src.source) {
+                offset = value - src.source;
+                idx = i;
+            }
+        }
+        if (offset != 0) {
+            value = map.map[idx].dest + offset;
+        }
+        std.debug.print("probing: {s} value: {d}\n", .{ map.from, value });
+        mapping = almanac.mappings.get(map.to);
+    }
 
-    return 0;
+    return value;
 }
 
 pub fn main() !void {
@@ -94,13 +111,24 @@ pub fn main() !void {
     const input = try readFile(allocator, "input");
     const idx = std.mem.indexOfScalar(u8, input, '\n') orelse 0;
 
-    const seeds = input[0..idx];
-    _ = seeds;
+    var seeds = input[0..idx];
+    seeds = seeds[7..];
+    var seedIter = std.mem.splitScalar(u8, seeds, ' ');
+    var useeds: [20]usize = .{0} ** 20;
+
+    var i: usize = 0;
+    while (seedIter.next()) |seedstr| {
+        useeds[i] = std.fmt.parseUnsigned(usize, seedstr, 10) catch 0;
+        i += 1;
+    }
 
     const almanac = try Almanac.fromInput(allocator, input[idx + 1 ..]);
-
-    var keys = almanac.mappings.keyIterator();
-    while (keys.next()) |key| {
-        std.debug.print("key is: {s}\n", .{key.*});
+    var lowest: usize = std.math.maxInt(usize);
+    for (useeds) |seed| {
+        const value = probeSeedLocation(almanac, seed);
+        if (value < lowest) {
+            lowest = value;
+        }
     }
+    std.debug.print("The lowest location is: {d}\n", .{lowest});
 }
