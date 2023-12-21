@@ -12,6 +12,22 @@ fn readFile(allocator: Allocator, filename: []const u8) ![]const u8 {
     return try reader.readAllAlloc(allocator, sz);
 }
 
+// day 2 is *way* to slow, so need to rethink this
+// We don't need to check every single number, we only need to check
+// the lowest number of each range
+//
+// for example:
+// Start    end
+// 10       13
+// 20       25
+// 30       40
+// 50       55
+//
+// and our interval is:
+// 22 - 53
+// we only actually need to check the numbers 22, 30, 50
+//
+
 const Triple = struct {
     source: usize,
     dest: usize,
@@ -97,7 +113,7 @@ fn probeSeedLocation(almanac: Almanac, seed: usize) usize {
         if (offset != 0) {
             value = map.map[idx].dest + offset;
         }
-        std.debug.print("probing: {s} value: {d}\n", .{ map.from, value });
+        //std.debug.print("probing: {s} value: {d}\n", .{ map.from, value });
         mapping = almanac.mappings.get(map.to);
     }
 
@@ -131,4 +147,24 @@ pub fn main() !void {
         }
     }
     std.debug.print("The lowest location is: {d}\n", .{lowest});
+
+    // part 2
+    lowest = std.math.maxInt(usize);
+    i = 0;
+    while (i < useeds.len) {
+        var start = @min(useeds[i], useeds[i + 1]);
+        const end = @max(useeds[i], useeds[i + 1]);
+
+        //for (start..end) |seed| { // integer overflow?????
+        while (start <= end) {
+            const value = probeSeedLocation(almanac, start);
+            if (value < lowest) {
+                lowest = value;
+            }
+            start += 1;
+        }
+
+        i += 2;
+    }
+    std.debug.print("Part 2 lowest is: {d}\n", .{lowest});
 }
