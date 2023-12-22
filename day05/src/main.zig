@@ -30,15 +30,85 @@ const Tuple = struct {
     range: usize,
 };
 
+const Map = struct {
+    srcName: []const u8,
+    destName: []const u8,
+    maps: []const Tuple,
+};
+
 const Almanac = struct {
-    const MappingType = std.StringHashMap(Tuple);
+    const MappingType = std.StringHashMap(Map);
     maps: MappingType,
+    allocator: Allocator,
 
     fn init(allocator: Allocator) !Almanac {
         var almanac = Almanac{
             .maps = MappingType.init(allocator),
+            .allocator = allocator,
         };
         return almanac;
+    }
+
+    fn deinit(self: *Almanac) void {
+        var mapsIter = self.maps.valueIterator();
+
+        while (mapsIter.next()) |map| {
+            self.allocator.free(map.*.maps);
+        }
+
+        self.maps.deinit();
+    }
+
+    fn parseSection(self: *Almanac, input: []const u8) !void {
+        var inputIter = std.mem.splitScalar(u8, input, '\n');
+
+        const src2dest = inputIter.next().?;
+        var stdIter = std.mem.splitSequence(u8, src2dest, "-to-");
+        const srcName = stdIter.next().?;
+        const destName = stdIter.next().?;
+
+        var list = std.ArrayList(Tuple).init(self.allocator);
+        defer list.deinit();
+        while (inputIter.next()) |line| {
+            if (line.len == 0) {
+                continue;
+            }
+            var lineIter = std.mem.splitScalar(u8, line, ' ');
+
+            //std.debug.print("{s}\n", .{lineIter.next().?});
+            var tuple = Tuple{
+                .dest = std.fmt.parseUnsigned(usize, lineIter.next().?, 10) catch unreachable,
+                .src = std.fmt.parseUnsigned(usize, lineIter.next().?, 10) catch unreachable,
+                .range = std.fmt.parseUnsigned(usize, lineIter.next().?, 10) catch unreachable,
+            };
+
+            try list.append(tuple);
+        }
+
+        try self.maps.put(srcName, Map{
+            .srcName = srcName,
+            .destName = destName,
+            .maps = try list.toOwnedSlice(),
+        });
+    }
+
+    fn probeSeedLocation(self: *Almanac, seed: usize) usize {
+        const startKey = "seed";
+        var mapo = self.maps.get(startKey);
+
+        var location: usize = seed;
+        while (mapo) |map| {
+            mapo = self.maps.get(map.destName);
+        }
+
+        return location;
+    }
+
+    fn probeRangeLocation(self: *Almanac, start: usize, end: usize) usize {
+        _ = end;
+        _ = start;
+        _ = self;
+        return 0;
     }
 };
 
@@ -51,7 +121,13 @@ pub fn main() !void {
 
     const seeds = try parseSeeds(allocator, sectionIter.next().?);
     defer allocator.free(seeds);
+
     for (seeds) |seed| {
         std.debug.print("Seed: {d}\n", .{seed});
+    }
+    var almanac = try Almanac.init(allocator);
+    defer almanac.deinit();
+    while (sectionIter.next()) |section| {
+        try almanac.parseSection(section);
     }
 }
