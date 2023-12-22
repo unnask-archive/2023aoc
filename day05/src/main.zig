@@ -24,7 +24,23 @@ fn parseSeeds(allocator: Allocator, input: []const u8) ![]usize {
     return try list.toOwnedSlice();
 }
 
-const Almanac = struct {};
+const Tuple = struct {
+    dest: usize,
+    src: usize,
+    range: usize,
+};
+
+const Almanac = struct {
+    const MappingType = std.StringHashMap(Tuple);
+    maps: MappingType,
+
+    fn init(allocator: Allocator) !Almanac {
+        var almanac = Almanac{
+            .maps = MappingType.init(allocator),
+        };
+        return almanac;
+    }
+};
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
