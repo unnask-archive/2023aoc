@@ -110,10 +110,17 @@ const Almanac = struct {
     }
 
     fn probeRangeLocation(self: *Almanac, start: usize, end: usize) usize {
-        _ = end;
-        _ = start;
-        _ = self;
-        return 0;
+        var lowest: usize = std.math.maxInt(usize);
+        for (self.maps.get("seed").?.maps) |map| {
+            if (map.src <= end and map.src >= start) {
+                const location = self.probeSeedLocation(map.src);
+                if (location < lowest) {
+                    lowest = location;
+                }
+            }
+        }
+
+        return lowest;
     }
 };
 
@@ -144,4 +151,19 @@ pub fn main() !void {
         }
     }
     std.debug.print("Part 1: {d}\n", .{lowest});
+
+    var is: usize = 0;
+    lowest = std.math.maxInt(usize);
+    while (is < seeds.len) {
+        const start = @min(seeds[is], seeds[is + 1]);
+        const end = @max(seeds[is], seeds[is + 1]);
+
+        const probe = almanac.probeRangeLocation(start, end);
+        if (probe < lowest) {
+            lowest = probe;
+        }
+
+        is += 2;
+    }
+    std.debug.print("Part 2: {d}\n", .{lowest});
 }
