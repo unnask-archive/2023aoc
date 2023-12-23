@@ -64,8 +64,8 @@ const Almanac = struct {
 
         const src2dest = inputIter.next().?;
         var stdIter = std.mem.splitSequence(u8, src2dest, "-to-");
-        const srcName = stdIter.next().?;
-        const destName = stdIter.next().?;
+        const srcName = std.mem.trim(u8, stdIter.next().?, &[_]u8{ ' ', '\n' });
+        const destName = std.mem.trim(u8, stdIter.next().?, &[_]u8{ ' ', '\n' });
 
         var list = std.ArrayList(Tuple).init(self.allocator);
         defer list.deinit();
@@ -75,7 +75,6 @@ const Almanac = struct {
             }
             var lineIter = std.mem.splitScalar(u8, line, ' ');
 
-            //std.debug.print("{s}\n", .{lineIter.next().?});
             var tuple = Tuple{
                 .dest = std.fmt.parseUnsigned(usize, lineIter.next().?, 10) catch unreachable,
                 .src = std.fmt.parseUnsigned(usize, lineIter.next().?, 10) catch unreachable,
@@ -87,7 +86,7 @@ const Almanac = struct {
 
         try self.maps.put(srcName, Map{
             .srcName = srcName,
-            .destName = destName,
+            .destName = destName[0 .. destName.len - 5],
             .maps = try list.toOwnedSlice(),
         });
     }
@@ -98,6 +97,12 @@ const Almanac = struct {
 
         var location: usize = seed;
         while (mapo) |map| {
+            for (map.maps) |tuple| {
+                if (location >= tuple.src and location <= tuple.src + tuple.range) {
+                    location = tuple.dest + (location - tuple.src);
+                    break;
+                }
+            }
             mapo = self.maps.get(map.destName);
         }
 
@@ -130,4 +135,13 @@ pub fn main() !void {
     while (sectionIter.next()) |section| {
         try almanac.parseSection(section);
     }
+
+    var lowest: usize = std.math.maxInt(usize);
+    for (seeds) |seed| {
+        const probe = almanac.probeSeedLocation(seed);
+        if (probe < lowest) {
+            lowest = probe;
+        }
+    }
+    std.debug.print("Part 1: {d}\n", .{lowest});
 }
