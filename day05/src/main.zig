@@ -91,9 +91,8 @@ const Almanac = struct {
         });
     }
 
-    fn probeSeedLocation(self: *Almanac, seed: usize) usize {
-        const startKey = "seed";
-        var mapo = self.maps.get(startKey);
+    fn probeSeedLocation(self: *Almanac, mapKey: []const u8, seed: usize) usize {
+        var mapo = self.maps.get(mapKey);
 
         var location: usize = seed;
         while (mapo) |map| {
@@ -109,18 +108,50 @@ const Almanac = struct {
         return location;
     }
 
-    fn probeRangeLocation(self: *Almanac, start: usize, end: usize) usize {
-        var lowest: usize = std.math.maxInt(usize);
-        for (self.maps.get("seed").?.maps) |map| {
-            if (map.src <= end and map.src >= start) {
-                const location = self.probeSeedLocation(map.src);
-                if (location < lowest) {
-                    lowest = location;
-                }
+    //too slow to probe every location individually.
+    //we could thread it, but we could also do less work.
+    //The intervals here are always mapped ascending, otherwise use the seed
+    //so while we only technically need the first one, the range is relevant
+    //through each section.
+    //Each range ay also break up, so we will probe the start and end of
+    //the broken ranges
+    //seed start                                               seed end
+    //[st1      ed1][st2                               ed2][st3    ed3]
+    //We must break up and process each individually because the ranges are
+    //also segmented.
+    fn probeRangeLocation(self: *Almanac, mapKey: []const u8, start: usize, end: usize) usize {
+        //create the segments
+        var segments = std.ArrayList([2]usize).init(self.allocator);
+        defer segments.deinit();
+        var pairs = std.ArrayList([2]usize).init(self.allocator);
+        defer pairs.deinit();
+        pairs.append([2]u8{ start, end });
+
+        const mapping = self.maps.get(mapKey).?;
+        for (mapping.maps) |map| {
+            const srcEnd = map.src + map.range;
+            _ = srcEnd;
+            while (pairs.popOrNull()) |pair| {
+                _ = pair;
+                // imagine we have
+                //            [map str                    map end]
+                // we could have these cases:
+                // [seed str                                         seed end]
+                // [seed str                      seed end]
+                //                   [seed str                       seed end]
+                //               [seed str            seed end]
+                //
+                //so we need to capture all of these potential ranges.
+                //since the maps don't overlap, if we fall in a range, we
+                //can push this to the known segments
+                //if we don't fall in the current map, we need to continue
+                //checking the split ranges through all of the maps to
+                //see if they fall in any maps. Only if the split fall in to
+                //no ranges can we then add them as it to the segments
             }
         }
 
-        return lowest;
+        return 0;
     }
 };
 
@@ -145,7 +176,7 @@ pub fn main() !void {
 
     var lowest: usize = std.math.maxInt(usize);
     for (seeds) |seed| {
-        const probe = almanac.probeSeedLocation(seed);
+        const probe = almanac.probeSeedLocation("seed", seed);
         if (probe < lowest) {
             lowest = probe;
         }
@@ -158,7 +189,7 @@ pub fn main() !void {
         const start = @min(seeds[is], seeds[is + 1]);
         const end = @max(seeds[is], seeds[is + 1]);
 
-        const probe = almanac.probeRangeLocation(start, end);
+        const probe = almanac.probeRangeLocation("seed", start, end);
         if (probe < lowest) {
             lowest = probe;
         }
