@@ -119,39 +119,75 @@ const Almanac = struct {
     //[st1      ed1][st2                               ed2][st3    ed3]
     //We must break up and process each individually because the ranges are
     //also segmented.
-    fn probeRangeLocation(self: *Almanac, mapKey: []const u8, start: usize, end: usize) usize {
+    fn probeRangeLocation(self: *Almanac, mapKey: []const u8, start: usize, end: usize) !usize {
         //create the segments
         var segments = std.ArrayList([2]usize).init(self.allocator);
         defer segments.deinit();
         var pairs = std.ArrayList([2]usize).init(self.allocator);
         defer pairs.deinit();
-        pairs.append([2]u8{ start, end });
+        var tmp = std.ArrayList([2]usize).init(self.allocator);
+        defer tmp.deinit();
+        try pairs.append([2]usize{ start, end });
 
-        const mapping = self.maps.get(mapKey).?;
-        for (mapping.maps) |map| {
-            const srcEnd = map.src + map.range;
-            _ = srcEnd;
+        var amap = self.maps.get(mapKey);
+        while (amap) |mapping| {
+            while (segments.popOrNull()) |segment| {
+                try pairs.append(segment);
+            }
+            for (mapping.maps) |map| {
+                const srcEnd = map.src + map.range;
+                while (pairs.popOrNull()) |pair| {
+                    // imagine we have
+                    //                 [map str                    map end]
+                    // we could have these cases:
+                    // [seed str                                         seed end]
+                    // [seed str                      seed end]
+                    //                   [seed str                       seed end]
+                    //                    [seed str            seed end]
+                    // [seed str  end]
+                    //                                                       [seed str   end]
+                    //
+                    //so we need to capture all of these potential ranges.
+                    //since the maps don't overlap, if we fall in a range, we
+                    //can push this to the known segments
+                    //if we don't fall in the current map, we need to continue
+                    //checking the split ranges through all of the maps to
+                    //see if they fall in any maps. Only if the split fall in to
+                    //no ranges can we then add them as it to the segments
+                    const seq1 = [2]usize{ pair[0], @min(map.src, pair[1]) };
+                    const seq2 = [2]usize{ @max(pair[0], map.src), @min(pair[1], srcEnd) };
+                    const seq3 = [2]usize{ @max(pair[0], srcEnd), pair[1] };
+                    if (seq1[1] > seq1[0]) {
+                        try tmp.append(seq1);
+                    }
+                    if (seq3[1] > seq3[0]) {
+                        try tmp.append(seq3);
+                    }
+                    if (seq2[1] > seq2[0]) {
+                        try segments.append([2]usize{ map.dest + (seq2[0] - map.src), map.dest + (seq2[1] - map.src) });
+                    }
+                }
+
+                while (tmp.popOrNull()) |tpair| {
+                    try pairs.append(tpair);
+                }
+            }
+
             while (pairs.popOrNull()) |pair| {
-                _ = pair;
-                // imagine we have
-                //            [map str                    map end]
-                // we could have these cases:
-                // [seed str                                         seed end]
-                // [seed str                      seed end]
-                //                   [seed str                       seed end]
-                //               [seed str            seed end]
-                //
-                //so we need to capture all of these potential ranges.
-                //since the maps don't overlap, if we fall in a range, we
-                //can push this to the known segments
-                //if we don't fall in the current map, we need to continue
-                //checking the split ranges through all of the maps to
-                //see if they fall in any maps. Only if the split fall in to
-                //no ranges can we then add them as it to the segments
+                try segments.append(pair);
+            }
+
+            amap = self.maps.get(mapping.destName);
+        }
+
+        var lowest: usize = std.math.maxInt(usize);
+        while (segments.popOrNull()) |segment| {
+            if (segment[0] < lowest) {
+                lowest = segment[0];
             }
         }
 
-        return 0;
+        return lowest;
     }
 };
 
@@ -186,10 +222,10 @@ pub fn main() !void {
     var is: usize = 0;
     lowest = std.math.maxInt(usize);
     while (is < seeds.len) {
-        const start = @min(seeds[is], seeds[is + 1]);
-        const end = @max(seeds[is], seeds[is + 1]);
+        const start = seeds[is];
+        const end = seeds[is] + seeds[is + 1];
 
-        const probe = almanac.probeRangeLocation("seed", start, end);
+        const probe = try almanac.probeRangeLocation("seed", start, end);
         if (probe < lowest) {
             lowest = probe;
         }
