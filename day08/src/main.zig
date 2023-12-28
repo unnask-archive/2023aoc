@@ -42,7 +42,7 @@ pub fn main() !void {
         var lr = mapIter.next().?;
         lr = lr[1 .. lr.len - 1];
 
-        var lrIter = std.mem.splitScalar(u8, lr, ',');
+        var lrIter = std.mem.splitSequence(u8, lr, ", ");
         try left.put(val, lrIter.next().?);
         try right.put(val, lrIter.next().?);
     }
@@ -51,11 +51,13 @@ pub fn main() !void {
 
     var total: usize = 0;
     var element: []const u8 = "AAA";
-    while (true) found: {
+    found: while (true) {
         for (moves) |move| {
             total += 1;
-            element = lookup.get(move).?.get(element).?;
+            const m = lookup.get(move).?;
+            element = m.get(element).?;
             if (std.mem.eql(u8, "ZZZ", element)) {
+                std.debug.print("Found it\n", .{});
                 break :found;
             }
         }
