@@ -63,4 +63,10 @@ pub fn main() !void {
         }
     }
     std.debug.print("Part 1 Total is: {d}\n", .{total});
+
+    //part 2 is a bit more annoying
+    //need to navigate multiple elements ending with A through until ALL of
+    //the elements land on an element ending is Z at the same time.
+    //I think we can just find the lowest count of each element, then find the
+    //lowest common multiple of the elements instead
 }
