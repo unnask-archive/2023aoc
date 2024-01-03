@@ -147,6 +147,8 @@ pub fn main() !void {
         // count the intersections with everything but - or .
         // if even outside
         // if odd inside
+        // careful though. F7 or F---7 or LJ or L----J count 2
+        //                 L7 or L---7 or FJ or F----J count 1
 
         for (wind, 0..) |ch, i| {
             _ = i;
