@@ -139,10 +139,16 @@ pub fn main() !void {
     if (st + 1 < in.len) {
         refill(in, p2tmp, ll, st + 1, st);
     }
-    var window = std.mem.window(u8, p2tmp, ll, ll);
-    while (window.next()) |wind| {
-        std.debug.print("{s}\n", .{wind});
 
+    var rng: usize = 0;
+    var total: usize = 0;
+    //technically window works, but it's const, so I just used a slice for
+    //easier visual debugging.
+    //var window = std.mem.window(u8, p2tmp, ll, ll);
+    //while (window.next()) |wind| {
+    while (rng + ll < p2tmp.len) {
+        var wind = p2tmp[rng .. rng + ll];
+        rng += ll;
         // I think we can ray cast through a window for each . and
         // count the intersections with everything but - or .
         // if even outside
@@ -150,10 +156,43 @@ pub fn main() !void {
         // careful though. F7 or F---7 or LJ or L----J count 2
         //                 L7 or L---7 or FJ or F----J count 1
 
+        var edges: usize = 0;
+        var prev: u8 = '.';
         for (wind, 0..) |ch, i| {
-            _ = i;
-            _ = ch;
             //cast a ray
+            if (ch == '|') {
+                edges += 1;
+            } else if (ch == 'J' and prev == 'F') {
+                edges += 1;
+            } else if (ch == '7' and prev == 'L') {
+                edges += 1;
+            } else if (ch == 'S') {
+                edges += 1;
+            } else if (ch == '.') {
+                if (edges % 2 == 1) {
+                    total += 1;
+                    wind[i] = 'I';
+                }
+            }
+            // we do not care about the '-' because reegardless of them,
+            // F7 and F----7 for the same loop for our purpose and
+            // FJ anf F----J still only form a straight line, our detection
+            // doesnt care the length of the line, just that it would intersect
+            // F7 and F---7 Visualization
+            // -     _   <- it doesn't matter how long this is!
+            // F    / \  7
+            //     /   \
+            //
+            // FJ and F---J Visualization
+            // J    /
+            // -   /
+            // -  /
+            // F /
+            if (!(ch == '-' or ch == '.')) {
+                prev = ch;
+            }
         }
+        std.debug.print("{s}\n", .{wind});
     }
+    std.debug.print("The part 2 total is {d}\n", .{total});
 }
