@@ -1,6 +1,10 @@
 const std = @import("std");
 const in = @embedFile("input");
 
+//Apparently part 2 can be more easily resolved with
+//Picks Theorem and Shoelace Formula
+//Cool.
+
 fn findLoop(input: []const u8, lsz: usize, idx: usize, prev: usize) usize {
     switch (input[idx]) {
         '|' => {
