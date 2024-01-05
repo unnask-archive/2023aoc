@@ -52,4 +52,8 @@ pub fn main() !void {
 
     var storage = allocator.alloc(u8, (irows * 2) * (icols * 2));
     defer allocator.free(storage);
+
+    // Actually, I don't think I even need storage here.
+    // Just recalculate the coordinates, then refer to pythagorean theorem
+    // to calculate the shortest distances (multiply by 2).
 }
