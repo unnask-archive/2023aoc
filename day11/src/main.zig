@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const in = @embedFile("example");
+const in = @embedFile("input");
 
 const Coord = struct { x: usize, y: usize };
 
@@ -42,8 +42,8 @@ pub fn main() !void {
                 er[r] = false;
                 ec[c] = false;
                 try coords.append(Coord{
-                    .x = r,
-                    .y = c,
+                    .x = c,
+                    .y = r,
                 });
             }
         }
@@ -57,13 +57,41 @@ pub fn main() !void {
     // Just recalculate the coordinates, then refer to pythagorean theorem
     // to calculate the shortest distances (multiply by 2).
 
+    var offset: usize = 0;
     for (ec, 0..) |exp, i| {
         if (exp) {
             for (coords.items) |*coord| {
-                if (coord.x > i) {
+                if (coord.x > i + offset) {
                     coord.x += 1;
                 }
             }
+            offset += 1;
         }
     }
+    offset = 0;
+    for (er, 0..) |exp, i| {
+        if (exp) {
+            for (coords.items) |*coord| {
+                if (coord.y > i + offset) {
+                    coord.y += 1;
+                }
+            }
+            offset += 1;
+        }
+    }
+
+    // Have the new coordinates now. calculate.
+    var total: usize = 0;
+    for (coords.items, 0..) |coord, i| {
+        if (i == coords.items.len) {
+            continue;
+        }
+        for (coords.items[i + 1 ..]) |coord2| {
+            const dist = (@max(coord.x, coord2.x) - @min(coord.x, coord2.x)) +
+                (@max(coord.y, coord2.y) - @min(coord.y, coord2.y));
+            total += dist;
+            //std.debug.print("From: {d}-{d} to {d}-{d} -- dist: {d}\n", .{ coord.y, coord.x, coord2.y, coord2.x, dist });
+        }
+    }
+    std.debug.print("Part 1 total is: {d}\n", .{total});
 }
