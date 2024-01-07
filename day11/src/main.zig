@@ -53,19 +53,19 @@ pub fn main() !void {
     //var storage = allocator.alloc(u8, (irows * 2) * (icols * 2));
     //defer allocator.free(storage);
 
-    // Actually, I don't think I even need storage here.
-    // Just recalculate the coordinates, then refer to pythagorean theorem
-    // to calculate the shortest distances (multiply by 2).
+    // Actually, I don't think I even need storage here. basic math aught to do
 
+    //As to why I need to use 999,999 instead of 100,000 for my addition in
+    //part 2, dunno, and probably not going to find out.
     var offset: usize = 0;
     for (ec, 0..) |exp, i| {
         if (exp) {
             for (coords.items) |*coord| {
                 if (coord.x > i + offset) {
-                    coord.x += 1;
+                    coord.x += 999999;
                 }
             }
-            offset += 1;
+            offset += 999999;
         }
     }
     offset = 0;
@@ -73,10 +73,10 @@ pub fn main() !void {
         if (exp) {
             for (coords.items) |*coord| {
                 if (coord.y > i + offset) {
-                    coord.y += 1;
+                    coord.y += 999999;
                 }
             }
-            offset += 1;
+            offset += 999999;
         }
     }
 
@@ -90,7 +90,7 @@ pub fn main() !void {
             const dist = (@max(coord.x, coord2.x) - @min(coord.x, coord2.x)) +
                 (@max(coord.y, coord2.y) - @min(coord.y, coord2.y));
             total += dist;
-            //std.debug.print("From: {d}-{d} to {d}-{d} -- dist: {d}\n", .{ coord.y, coord.x, coord2.y, coord2.x, dist });
+            std.debug.print("From: {d}-{d} to {d}-{d} -- dist: {d}\n", .{ coord.y, coord.x, coord2.y, coord2.x, dist });
         }
     }
     std.debug.print("Part 1 total is: {d}\n", .{total});
